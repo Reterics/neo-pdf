@@ -1,0 +1,26 @@
+{
+  "name": "neo-pdf",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "author": "Attila Reterics",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1"
+  }
+}
