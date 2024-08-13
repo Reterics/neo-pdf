@@ -18,7 +18,8 @@
   "author": "Attila Reterics",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "@types/react": "^18.3.3"
   },
   "peerDependencies": {
     "react": "^18.3.1"
