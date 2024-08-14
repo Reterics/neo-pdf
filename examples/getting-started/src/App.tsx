@@ -1,11 +1,12 @@
 import React from 'react';
-import {NeoPDF} from '../../../dist';
+import {SVGViewer} from '../../../dist';
 
 const App: React.FC = () => {
+    const src = './text.pdf';
     return (
         <div>
             <h1>TypeScript Example of MyComponent</h1>
-            <NeoPDF />
+            <SVGViewer src={src}/>
         </div>
     );
 };
