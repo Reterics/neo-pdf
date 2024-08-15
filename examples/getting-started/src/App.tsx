@@ -1,5 +1,6 @@
 import React from 'react';
 import {SVGViewer} from '../../../dist';
+import './App.css';
 
 const App: React.FC = () => {
     const src = './text.pdf';

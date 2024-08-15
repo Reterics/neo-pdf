@@ -9,7 +9,7 @@ import 'pdfjs-dist/webpack.mjs';
 const SVGPDFViewer = ({src}:{src:string}) => {
 
     const [pageNumber, setPageNumber] = useState(1);
-    const [pageScale, setPageScale] = useState(0.5);
+    const [pageScale, setPageScale] = useState(1);
     const [pageData, setPageData] = useState<{
         viewPort: PageViewport|null,
         textContent: TextContent|null,
@@ -23,7 +23,9 @@ const SVGPDFViewer = ({src}:{src:string}) => {
         const pdfDocument = await loadingTask.promise;
         const page = await pdfDocument.getPage(pageNumber);
         const viewPort = page.getViewport({ scale: pageScale });
-        const textContent = await page.getTextContent();
+        const textContent = await page.getTextContent({
+            disableNormalization: true
+        });
         // building SVG and adding that to the DOM
 
         setPageData({viewPort: viewPort, textContent})
@@ -38,7 +40,12 @@ const SVGPDFViewer = ({src}:{src:string}) => {
     }, []);
 
     return (
-        <svg xmlns="http://www.w3.org/2000/svg">
+        <svg xmlns="http://www.w3.org/2000/svg" className='svg-viewer'
+            viewBox={pageData.viewPort ? pageData.viewPort.viewBox.join(' ') : undefined}
+            style={{
+                width: pageData.viewPort ? pageData.viewPort.width + 'px' : '100%',
+                height: pageData.viewPort ? pageData.viewPort.height + 'px' : '100%',
+            }}>
             {pageData.textContent && pageData.viewPort &&
                 pageData.textContent.items.map(textItem => {
                     const viewPort = pageData.viewPort;
@@ -50,8 +57,18 @@ const SVGPDFViewer = ({src}:{src:string}) => {
                             [1, 0, 0, -1, 0, 0]
                         );
                         const style = textContent.styles[text.fontName];
+
+                        const fontSize = Math.sqrt((tx[2] * tx[2]) + (tx[3] * tx[3]));
                         return (
-                            <text transform={"matrix(" + tx.join(" ") + ")"} fontFamily={style.fontFamily}>{text.str}</text>)
+                            <text
+                                x={tx[4]}
+                                y={tx[5]}
+                                /*transform={"matrix(" + tx.join(" ") + ")"}*/
+                                fontFamily={style.fontFamily}
+                                fontSize={fontSize-1 + 'px '}
+                                textLength={text.width+'px'}
+
+                            >{text.str}</text>)
                     }
                 })
                }
