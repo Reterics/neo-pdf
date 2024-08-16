@@ -1,4 +1,4 @@
-import {PageViewport, getDocument, TextLayer} from "pdfjs-dist";
+import {PageViewport, getDocument, TextLayer, PDFDocumentProxy} from "pdfjs-dist";
 import * as pdfjs from "pdfjs-dist";
 import {useEffect, useRef, useState} from "react";
 import {PDFOperatorList, TextContent, TextItem} from "pdfjs-dist/types/src/display/api";
@@ -15,9 +15,10 @@ interface PDFImageLike {
     transform: number[],
 }
 
-const SVGPDFViewer = ({src}:{src:string}) => {
+const SVGPDFViewer = ({src}:{src:string|URL|null}) => {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [pdfDocument, setPDFDocument] = useState<PDFDocumentProxy|null>(null);
     const [pageNumber, setPageNumber] = useState(1);
     const [pageScale, setPageScale] = useState(1);
     const [pageData, setPageData] = useState<{
@@ -32,9 +33,7 @@ const SVGPDFViewer = ({src}:{src:string}) => {
         images: []
     });
 
-    async function loadPage () {
-        const loadingTask = getDocument({ url: src });
-        const pdfDocument = await loadingTask.promise;
+    async function loadPage(pdfDocument: PDFDocumentProxy) {
         const page = await pdfDocument.getPage(pageNumber);
         const viewPort = page.getViewport({ scale: pageScale });
         const textContent = await page.getTextContent({
@@ -98,6 +97,8 @@ const SVGPDFViewer = ({src}:{src:string}) => {
         if (canvasRef.current) {
             const ctx = canvasRef.current.getContext('2d');
             if (ctx) {
+                ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+
                 images.forEach((image, i) => {
                     if (image.bitmap) {
                         const tx = pdfjs.Util.transform(
@@ -117,51 +118,86 @@ const SVGPDFViewer = ({src}:{src:string}) => {
         page.cleanup();
     }
 
-    useEffect(()=>{
-        void loadPage();
-    }, []);
+    async function loadDocument (src: string | URL | null) {
+        const loadingTask = getDocument({ url: src || undefined });
+        const pdfDocument = await loadingTask.promise;
 
+        setPDFDocument(pdfDocument);
+    }
+
+    useEffect(()=>{
+        void loadDocument(src);
+    }, [src]);
+
+    useEffect(()=>{
+        if (pdfDocument) {
+            void loadPage(pdfDocument)
+        }
+    }, [pdfDocument, pageNumber]);
+
+    const changePage = (operator: '-'|'+') => {
+        if (pdfDocument) {
+            let target = pageNumber;
+            if (operator === '-') {
+                target = Math.max(0, pageNumber-1);
+            } else if (operator === '+') {
+                target = Math.min(pageNumber+1, pdfDocument.numPages);
+            } else {
+                return;
+            }
+
+            setPageNumber(target);
+        }
+
+    }
     return (
         <>
-            <canvas
-                ref={canvasRef}
-                width={pageData.viewPort ? pageData.viewPort.width : undefined}
-                height={pageData.viewPort ? pageData.viewPort.height + 'px' : undefined}
-                style={{position: 'absolute', pointerEvents: 'none'}}
-            ></canvas>
-            <svg xmlns="http://www.w3.org/2000/svg" className='svg-viewer'
-                viewBox={pageData.viewPort ? pageData.viewPort.viewBox.join(' ') : undefined}
-                style={{
-                    width: pageData.viewPort ? pageData.viewPort.width + 'px' : '100%',
-                    height: pageData.viewPort ? pageData.viewPort.height + 'px' : '100%',
-                }}>
-                {pageData.textContent && pageData.viewPort &&
-                    pageData.textContent.items.map(textItem => {
-                        const viewPort = pageData.viewPort;
-                        const textContent = pageData.textContent
-                        if (viewPort && textContent) {
-                            const text = textItem as TextItem;
-                            const tx = pdfjs.Util.transform(
-                                pdfjs.Util.transform(viewPort.transform, text.transform),
-                                [1, 0, 0, -1, 0, 0]
-                            );
-                            const style = textContent.styles[text.fontName];
+            <div className='svg-viewer-controls'>
+                <input type="button" value='<<' onClick={()=>changePage('-')}/>
+                <input type="text" value='1'/> / {pdfDocument ? pdfDocument.numPages : 0}
+                <input type="button" value='>>' onClick={()=>changePage('+')}/>
+            </div>
+            <div className='svg-viewer-container'>
+                <canvas
+                    ref={canvasRef}
+                    width={pageData.viewPort ? pageData.viewPort.width : undefined}
+                    height={pageData.viewPort ? pageData.viewPort.height + 'px' : undefined}
+                    style={{position: 'absolute', pointerEvents: 'none'}}
+                ></canvas>
+                <svg xmlns="http://www.w3.org/2000/svg" className='svg-viewer'
+                    viewBox={pageData.viewPort ? pageData.viewPort.viewBox.join(' ') : undefined}
+                    style={{
+                        width: pageData.viewPort ? pageData.viewPort.width + 'px' : '100%',
+                        height: pageData.viewPort ? pageData.viewPort.height + 'px' : '100%',
+                    }}>
+                    {pageData.textContent && pageData.viewPort &&
+                        pageData.textContent.items.map(textItem => {
+                            const viewPort = pageData.viewPort;
+                            const textContent = pageData.textContent
+                            if (viewPort && textContent) {
+                                const text = textItem as TextItem;
+                                const tx = pdfjs.Util.transform(
+                                    pdfjs.Util.transform(viewPort.transform, text.transform),
+                                    [1, 0, 0, -1, 0, 0]
+                                );
+                                const style = textContent.styles[text.fontName];
 
-                            const fontSize = Math.sqrt((tx[2] * tx[2]) + (tx[3] * tx[3]));
-                            return (
-                                <text
-                                    x={tx[4]}
-                                    y={tx[5]}
-                                    /*transform={"matrix(" + tx.join(" ") + ")"}*/
-                                    fontFamily={style.fontFamily}
-                                    fontSize={fontSize-1 + 'px '}
-                                    textLength={text.width+'px'}
+                                const fontSize = Math.sqrt((tx[2] * tx[2]) + (tx[3] * tx[3]));
+                                return (
+                                    <text
+                                        x={tx[4]}
+                                        y={tx[5]}
+                                        /*transform={"matrix(" + tx.join(" ") + ")"}*/
+                                        fontFamily={style.fontFamily}
+                                        fontSize={fontSize-1 + 'px '}
+                                        textLength={text.width+'px'}
 
-                                >{text.str}</text>)
-                        }
-                    })
-                   }
-            </svg>
+                                    >{text.str}</text>)
+                            }
+                        })
+                       }
+                </svg>
+            </div>
         </>
     )
 };
