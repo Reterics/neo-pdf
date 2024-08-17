@@ -18,7 +18,7 @@ const App: React.FC = () => {
         <div>
             <h1>Neo-PDF</h1>
             <input type="file" onChange={(e) => onFileChanged(e)}/>
-            <SVGViewer src={file}/>
+            <SVGViewer src={file} pagination={true}/>
         </div>
     );
 };

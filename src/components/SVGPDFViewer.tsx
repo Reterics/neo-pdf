@@ -1,105 +1,32 @@
-import {PageViewport, getDocument, TextLayer, PDFDocumentProxy} from "pdfjs-dist";
+import {getDocument, PageViewport, PDFDocumentProxy} from "pdfjs-dist";
 import * as pdfjs from "pdfjs-dist";
 import {useEffect, useRef, useState} from "react";
-import {PDFOperatorList, TextContent, TextItem} from "pdfjs-dist/types/src/display/api";
+import {TextItem} from "pdfjs-dist/types/src/display/api";
 import 'pdfjs-dist/webpack.mjs';
+import {PDFImageLike, PDFPageData, SVGPDFViewerProperties} from "../types";
+import {getImagesFromOperators} from "../utils/pdf";
 
-interface PDFImageLike {
-    bitmap?: ImageBitmap,
-    data?: unknown,
-    dataLen: number,
-    height: number,
-    interpolate?: boolean,
-    ref: string,
-    width: number,
-    transform: number[],
-}
 
-const SVGPDFViewer = ({src}:{src:string|URL|null}) => {
+
+const SVGPDFViewer = ({src,pagination}:SVGPDFViewerProperties) => {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [pdfDocument, setPDFDocument] = useState<PDFDocumentProxy|null>(null);
     const [pageNumber, setPageNumber] = useState(1);
     const [pageScale, setPageScale] = useState(1);
-    const [pageData, setPageData] = useState<{
-        viewPort: PageViewport|null,
-        textContent: TextContent|null,
-        operators: PDFOperatorList|null
-        images: PDFImageLike[]
-    }>({
+    const [pageData, setPageData] = useState<PDFPageData>({
         viewPort: null,
         textContent: null,
-        operators: null,
         images: []
     });
 
-    async function loadPage(pdfDocument: PDFDocumentProxy) {
-        const page = await pdfDocument.getPage(pageNumber);
-        const viewPort = page.getViewport({ scale: pageScale });
-        const textContent = await page.getTextContent({
-            disableNormalization: true
-        });
-        const operators = await page.getOperatorList();
-
-        const validImageTypes = new Set([
-            pdfjs.OPS.paintImageXObject, // 85
-            pdfjs.OPS.paintImageXObjectRepeat, // 88
-        ]);
-        const transformType = pdfjs.OPS.transform; // 12
-
-        const images: PDFImageLike[] = [];
-        for (let i = 0; i < operators.fnArray.length; i++) {
-            const element = operators.fnArray[i];
-            if (validImageTypes.has(element)) {
-                const arg = operators.argsArray[i];
-
-                const imgIndex = arg[0];
-                const img = await new Promise(resolve => page.objs.get(imgIndex, resolve)) as PDFImageLike;
-
-                let imgMeta;
-                for (let ind2 = i - 1; ind2 > i - 5; ind2--) {
-                    if (operators.fnArray[ind2] == transformType) {
-                        let tf = operators.argsArray[ind2];
-                        if (
-                            operators.fnArray?.[0] == transformType &&
-                            operators.fnArray?.[1] == pdfjs.OPS.save
-                        ) {
-                            // tf = combineTransform(tf, operatorList.argsArray[0]);
-                        }
-                        imgMeta = {
-                            width: tf[0],
-                            height: tf[3],
-                            transform: tf
-                        }
-
-                        break;
-                    }
-                }
-
-                if (img) {
-                    images.push({
-                        transform: imgMeta ? imgMeta.transform : null,
-                        bitmap: img.bitmap,
-                        data: img.data,
-                        dataLen: img.dataLen,
-                        height: imgMeta ? imgMeta.height : img.height,
-                        interpolate: img.interpolate,
-                        ref: img.ref,
-                        width: imgMeta ? imgMeta.width : img.width,
-                    });
-                }
-            }
-        }
-        // building SVG and adding that to the DOM
-
-        setPageData({viewPort: viewPort, textContent, operators, images})
-
-        if (canvasRef.current) {
-            const ctx = canvasRef.current.getContext('2d');
+    const renderImages = (images: PDFImageLike[], canvas: HTMLCanvasElement | null, viewPort: PageViewport) => {
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
             if (ctx) {
-                ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                images.forEach((image, i) => {
+                images.forEach((image) => {
                     if (image.bitmap) {
                         const tx = pdfjs.Util.transform(
                             pdfjs.Util.transform(viewPort.transform, image.transform),
@@ -114,16 +41,33 @@ const SVGPDFViewer = ({src}:{src:string|URL|null}) => {
 
             }
         }
-        // Release page resources.
-        page.cleanup();
     }
 
-    async function loadDocument (src: string | URL | null) {
+    const loadPage = async (pdfDocument: PDFDocumentProxy) => {
+        const page = await pdfDocument.getPage(pageNumber);
+        const viewPort = page.getViewport({ scale: pageScale });
+        const textContent = await page.getTextContent({
+            disableNormalization: true
+        });
+
+        const images = await getImagesFromOperators(page);
+
+        // building SVG and adding that to the DOM
+
+        setPageData({viewPort: viewPort, textContent, images})
+
+        renderImages(images, canvasRef.current, viewPort);
+
+        // Release page resources.
+        page.cleanup();
+    };
+
+    const loadDocument = async (src: string | URL | null) => {
         const loadingTask = getDocument({ url: src || undefined });
         const pdfDocument = await loadingTask.promise;
 
         setPDFDocument(pdfDocument);
-    }
+    };
 
     useEffect(()=>{
         void loadDocument(src);
@@ -135,13 +79,15 @@ const SVGPDFViewer = ({src}:{src:string|URL|null}) => {
         }
     }, [pdfDocument, pageNumber]);
 
-    const changePage = (operator: '-'|'+') => {
+    const changePage = (operator: '-'|'+'|'set', value?: undefined|number) => {
         if (pdfDocument) {
             let target = pageNumber;
             if (operator === '-') {
-                target = Math.max(0, pageNumber-1);
+                target = Math.max(1, pageNumber-1);
             } else if (operator === '+') {
                 target = Math.min(pageNumber+1, pdfDocument.numPages);
+            } else if (operator === 'set' && typeof value === 'number') {
+                target = Math.min(Math.max(1, value), pdfDocument.numPages);
             } else {
                 return;
             }
@@ -152,11 +98,16 @@ const SVGPDFViewer = ({src}:{src:string|URL|null}) => {
     }
     return (
         <>
-            <div className='svg-viewer-controls'>
-                <input type="button" value='<<' onClick={()=>changePage('-')}/>
-                <input type="text" value='1'/> / {pdfDocument ? pdfDocument.numPages : 0}
-                <input type="button" value='>>' onClick={()=>changePage('+')}/>
-            </div>
+            {pagination &&
+                <div className='svg-viewer-controls'>
+                    <input type="button" value='<<' onClick={()=>changePage('-')}/>
+                    <input type="number"
+                           value={pageNumber}
+                           onChange={(e) => changePage('set', Number(e.target.value))}
+                    /> / {pdfDocument ? pdfDocument.numPages : 0}
+                    <input type="button" value='>>' onClick={()=>changePage('+')}/>
+                </div>
+            }
             <div className='svg-viewer-container'>
                 <canvas
                     ref={canvasRef}
@@ -171,7 +122,7 @@ const SVGPDFViewer = ({src}:{src:string|URL|null}) => {
                         height: pageData.viewPort ? pageData.viewPort.height + 'px' : '100%',
                     }}>
                     {pageData.textContent && pageData.viewPort &&
-                        pageData.textContent.items.map(textItem => {
+                        pageData.textContent.items.map((textItem, index) => {
                             const viewPort = pageData.viewPort;
                             const textContent = pageData.textContent
                             if (viewPort && textContent) {
@@ -185,6 +136,7 @@ const SVGPDFViewer = ({src}:{src:string|URL|null}) => {
                                 const fontSize = Math.sqrt((tx[2] * tx[2]) + (tx[3] * tx[3]));
                                 return (
                                     <text
+                                        key={'svg_text_' + index}
                                         x={tx[4]}
                                         y={tx[5]}
                                         /*transform={"matrix(" + tx.join(" ") + ")"}*/
