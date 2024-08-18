@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {SVGViewer} from '../../../dist';
+import {SVGViewer,WebViewer} from '../../../dist';
 import './App.css';
 
 const App: React.FC = () => {
@@ -18,7 +18,7 @@ const App: React.FC = () => {
         <div>
             <h1>Neo-PDF</h1>
             <input type="file" onChange={(e) => onFileChanged(e)}/>
-            <SVGViewer src={file} pagination={true}/>
+            <WebViewer src={file} pagination={true}/>
         </div>
     );
 };
