@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {SVGViewer,WebViewer} from '../../../dist';
+import {WebViewer} from 'neo-pdf';
 import './App.css';
 
 const App: React.FC = () => {

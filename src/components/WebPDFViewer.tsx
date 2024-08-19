@@ -7,12 +7,14 @@ import {
     PDFHistory,
     DownloadManager, PDFFindController, PDFScriptingManager
 } from "pdfjs-dist/web/pdf_viewer.mjs";
-import 'pdfjs-dist/webpack.mjs';
+// @ts-ignore
+import {PDFDocumentProxy} from 'pdfjs-dist/webpack.mjs';
 import {SVGPDFViewerProperties, WebViewerData} from "../types";
-import {AnnotationEditorType, getDocument, PDFDocumentLoadingTask, PDFDocumentProxy} from "pdfjs-dist";
+import {AnnotationEditorType, getDocument, PDFDocumentLoadingTask} from "pdfjs-dist";
+import Toolbar from "./toolbar/Toolbar";
 
 const MAX_CANVAS_PIXELS = 0; // CSS-only zooming.
-const TEXT_LAYER_MODE = 0; // DISABLE
+const TEXT_LAYER_MODE = 1; // DISABLE
 const MAX_IMAGE_SIZE = 1024 * 1024;
 const DEFAULT_SCALE_DELTA = 1.1;
 const MIN_SCALE = 0.25;
@@ -108,7 +110,7 @@ const WebPDFViewer = ({src}: SVGPDFViewerProperties) => {
                 viewer,
                 eventBus,
                 linkService: pdfLinkService,
-                annotationEditorMode: AnnotationEditorType.HIGHLIGHT,
+                annotationEditorMode: AnnotationEditorType.NONE,
                 findController: findController,
                 scriptingManager: pdfScriptingManager,
                 l10n: l10n,
@@ -150,15 +152,7 @@ const WebPDFViewer = ({src}: SVGPDFViewerProperties) => {
     return (
         <div className="web-viewer-outer">
             <div className="web-viewer-main">
-                <div className="toolbar">
-                    <div id="svg-viewer-container">
-                        <div></div>
-                        <div></div>
-                        <div>
-                            <button id="editorFreeText" className="toolbar-button" type="button">Text</button>
-                        </div>
-                    </div>
-                </div>
+                <Toolbar />
 
                 <div ref={container} className="viewer-container" tabIndex={0} style={{position: 'absolute'}}>
                     <div ref={viewerContainer} id="viewer" className="pdfViewer"></div>
