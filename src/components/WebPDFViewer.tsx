@@ -31,9 +31,11 @@ const WebPDFViewer = ({src}: SVGPDFViewerProperties) => {
 
     const close = async () => {
         if (!pdfLoadingTask) {
+            console.warn('There is no PDF Loading task')
             return;
         }
 
+        console.log('Destory current laoded PDS');
         const promise = pdfLoadingTask.destroy();
         setPdfLoadingTask(null);
 
@@ -50,7 +52,8 @@ const WebPDFViewer = ({src}: SVGPDFViewerProperties) => {
 
         return promise;
     };
-    const open = async (params: {url: string}) => {
+
+    const open = async (params: {url: string | URL}) => {
         if (pdfLoadingTask) {
             // We need to destroy already opened document
             return close()
@@ -59,6 +62,7 @@ const WebPDFViewer = ({src}: SVGPDFViewerProperties) => {
                 });
         }
 
+        console.log('Get new document');
         const loadingTask = getDocument({
             url: params.url,
             maxImageSize: MAX_IMAGE_SIZE
@@ -68,14 +72,17 @@ const WebPDFViewer = ({src}: SVGPDFViewerProperties) => {
 
     useEffect(() => {
         if (pdfLoadingTask) {
+            console.log('PDF Loading task detected');
             pdfLoadingTask.promise.then((pdf: PDFDocumentProxy) => {
                 setPDFDocument(pdf);
                 viewerData?.pdfViewer.setDocument(pdf);
                 viewerData?.pdfLinkService.setDocument(pdf);
                 viewerData?.pdfHistory.initialize({
                     fingerprint: pdf.fingerprints[0]
-                })
-            });
+                });
+            }).catch(e=>{
+                console.error(e);
+            })
         }
     }, [pdfLoadingTask]);
 
@@ -143,11 +150,11 @@ const WebPDFViewer = ({src}: SVGPDFViewerProperties) => {
     }, []);
 
     useEffect(() => {
-        if (viewerData) {
+        if (viewerData && src) {
             // UI is loaded
-            void open({url: src as string});
+            void open({url: src});
         }
-    }, [viewerData]);
+    }, [viewerData, src]);
 
     return (
         <div className="web-viewer-outer">
