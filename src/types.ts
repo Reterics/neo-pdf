@@ -1,4 +1,4 @@
-import {PageViewport} from "pdfjs-dist";
+import {PageViewport, PDFDocumentProxy} from "pdfjs-dist";
 import {TextContent} from "pdfjs-dist/types/src/display/api";
 import {EventBus} from "pdfjs-dist/types/web/event_utils";
 import {GenericL10n} from "pdfjs-dist/types/web/genericl10n";
@@ -24,7 +24,7 @@ export interface PDFPageData {
 }
 
 export interface SVGPDFViewerProperties {
-    src: string|URL|null,
+    defaultSrc: string|URL|null,
     pagination?: boolean,
 }
 
@@ -34,4 +34,10 @@ export interface WebViewerData {
     l10n: GenericL10n,
     pdfViewer: PDFViewer,
     pdfHistory: PDFHistory
+}
+
+export interface PDFContextAPI {
+    viewerData: WebViewerData|null,
+    pdfDocument?: PDFDocumentProxy,
+    emit: (type: "open", value: unknown)=>void
 }
