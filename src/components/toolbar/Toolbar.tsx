@@ -7,12 +7,26 @@ import {
     FaMagnifyingGlassPlus, FaPencil, FaPrint
 } from "react-icons/fa6";
 import './Toolbar.less';
-import {useContext} from "react";
+import {useContext, useState} from "react";
 import {PDFContext} from "../../PDFProvider";
 
 const Toolbar = () => {
 
     const context = useContext(PDFContext);
+
+    const [highlight, setHighlight] = useState(false);
+    const [text, setText] = useState(false);
+    const [draw, setDraw] = useState(false);
+    const [image, setImage] = useState(false);
+
+    const toggleMenu = (type: 'highlight'|'text'|'draw'|'image') => {
+        setHighlight(type === 'highlight' ? !highlight : false);
+        setText(type === 'text' ? !text : false);
+        setDraw(type === 'draw' ? !draw : false);
+        setImage(type === 'image' ? !image : false);
+
+        context?.emit('annotation', type);
+    };
 
     const openPDFFile = () => {
         if (!context || !context.emit) {
@@ -44,13 +58,11 @@ const Toolbar = () => {
                     <button id="viewFind" className="toolbar-button" type="button" title="Find in Document"
                             tabIndex={12}>
                         <FaMagnifyingGlass/>
-
                     </button>
                     <button className="toolbar-button" title="Previous Page" id="previous" type="button"
                             tabIndex={13}>
                         <FaArrowLeft/>
                     </button>
-
                     <button className="toolbar-button" title="Next Page" id="next" type="button" tabIndex={14}>
                         <FaArrowRight/>
                     </button>
@@ -74,26 +86,50 @@ const Toolbar = () => {
 
                 <div className="toolbar-container-rigth">
                     <div className="editor-buttons">
-                        <button id="editorHighlight" className="toolbar-button" type="button" disabled={true}
-                                title="Highlight" role="radio" tabIndex={31}>
+                        <button id="editorHighlight" className="toolbar-button" type="button" disabled={!context?.pdfDocument}
+                                title="Highlight" role="radio" tabIndex={31} onClick={() => toggleMenu('highlight')}>
                             <FaHighlighter/>
-
                         </button>
-                        <button id="editorFreeText" className="toolbar-button" type="button" disabled={true}
-                                title="Text" role="radio"
-                                aria-controls="editorFreeTextParamsToolbar" tabIndex={32}>
+                        {highlight && <div className="toolbar-params-dropdown">
+                            Color:
+                            <input type="color"/>
+                            Thickness:
+                            <input type="range" min="8" max="24"/>
+                        </div>}
+
+                        <button id="editorFreeText" className="toolbar-button" type="button" disabled={!context?.pdfDocument}
+                                title="Text" role="radio" aria-controls="editorFreeTextParamsToolbar"
+                                tabIndex={32} onClick={() => toggleMenu('text')}>
                             <FaA/>
                         </button>
-                        <button id="editorInk" className="toolbar-button" type="button" disabled={true} title="Draw"
-                                role="radio" tabIndex={33}>
+                        {text && <div className="toolbar-params-dropdown">
+                            Color:
+                            <input type="color"/>
+                            Size:
+                            <input type="range" min="8" max="24"/>
+                        </div>}
+
+                        <button id="editorInk" className="toolbar-button" type="button" disabled={!context?.pdfDocument} title="Draw"
+                                role="radio" tabIndex={33} onClick={() => toggleMenu('draw')}>
                             <FaPencil/>
                         </button>
-                        <button id="editorStamp" className="toolbar-button" type="button" disabled={true}
+                        {draw && <div className="toolbar-params-dropdown">
+                            Color:
+                            <input type="color"/>
+                            Thickness:
+                            <input type="range" min="1" max="20"/>
+                            Opacity:
+                            <input type="range" min="1" max="100"/>
+                        </div>}
+
+                        <button id="editorStamp" className="toolbar-button" type="button" disabled={!context?.pdfDocument}
                                 title="Add or edit images" role="radio"
-                                tabIndex={34}>
+                                tabIndex={34} onClick={() => toggleMenu('image')}>
                             <FaFileImage/>
                         </button>
-
+                        {image && <div className="toolbar-params-dropdown">
+                            <button>Add Image</button>
+                        </div>}
                     </div>
 
                     <div className="vertical-toolbar-separator"></div>

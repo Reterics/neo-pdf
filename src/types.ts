@@ -39,5 +39,5 @@ export interface WebViewerData {
 export interface PDFContextAPI {
     viewerData: WebViewerData|null,
     pdfDocument?: PDFDocumentProxy,
-    emit: (type: "open", value: unknown)=>void
+    emit: (type: 'open'|'annotation', value: unknown)=>void
 }

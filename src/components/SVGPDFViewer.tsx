@@ -8,7 +8,7 @@ import {getImagesFromOperators} from "../utils/pdf";
 
 
 
-const SVGPDFViewer = ({src,pagination}:SVGPDFViewerProperties) => {
+const SVGPDFViewer = ({defaultSrc, pagination}:SVGPDFViewerProperties) => {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [pdfDocument, setPDFDocument] = useState<PDFDocumentProxy|null>(null);
@@ -70,8 +70,8 @@ const SVGPDFViewer = ({src,pagination}:SVGPDFViewerProperties) => {
     };
 
     useEffect(()=>{
-        void loadDocument(src);
-    }, [src]);
+        void loadDocument(defaultSrc);
+    }, [defaultSrc]);
 
     useEffect(()=>{
         if (pdfDocument) {

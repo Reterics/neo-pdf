@@ -1,6 +1,6 @@
 import {createContext, ReactNode, useEffect, useRef, useState} from "react";
 import {PDFContextAPI, WebViewerData} from "./types";
-import {AnnotationEditorType, getDocument, PDFDocumentLoadingTask, PDFDocumentProxy} from "pdfjs-dist";
+import {AnnotationEditorType, getDocument, PDFDocumentProxy} from "pdfjs-dist";
 import {
     DownloadManager,
     EventBus,
@@ -112,10 +112,13 @@ export const PDFProvider = ( {children, defaultSrc}: {children: ReactNode, defau
         };
     }, [src]);
 
-    const eventMgr = (type: 'open', value: unknown)=> {
+    const eventMgr = (type: 'open'|'annotation', value: unknown)=> {
         switch (type) {
             case "open":
                 setSrc(value as string | URL | null);
+                break;
+            case "annotation":
+                // we can toggle annotations: highlight, freetext, draw and none
                 break;
             default:
                 console.warn('Invalid event: ', type);
