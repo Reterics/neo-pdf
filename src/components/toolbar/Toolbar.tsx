@@ -1,7 +1,7 @@
 import {
     FaA,
     FaArrowLeft,
-    FaArrowRight, FaFileImage, FaFloppyDisk, FaFolderOpen, FaHighlighter,
+    FaArrowRight, FaCirclePlus, FaFileImage, FaFloppyDisk, FaFolderOpen, FaHighlighter,
     FaMagnifyingGlass,
     FaMagnifyingGlassMinus,
     FaMagnifyingGlassPlus, FaPencil, FaPrint
@@ -9,6 +9,7 @@ import {
 import './Toolbar.less';
 import {useContext, useState} from "react";
 import {PDFContext} from "../../PDFProvider";
+import ToolbarDropdown from "./ToolbarDropdown";
 
 const Toolbar = () => {
 
@@ -90,46 +91,67 @@ const Toolbar = () => {
                                 title="Highlight" role="radio" tabIndex={31} onClick={() => toggleMenu('highlight')}>
                             <FaHighlighter/>
                         </button>
-                        {highlight && <div className="toolbar-params-dropdown">
-                            Color:
-                            <input type="color"/>
-                            Thickness:
-                            <input type="range" min="8" max="24"/>
-                        </div>}
+                        <ToolbarDropdown isActive={highlight}>
+                            <div className="flex-row content-40-60">
+                                <span>Color:</span>
+                                <input type="color"/>
+                            </div>
+                            <div className="flex-row content-40-60">
+                                <span>Thickness:</span>
+                                <input type="range" min="8" max="24"/>
+                            </div>
+                        </ToolbarDropdown>
+
 
                         <button id="editorFreeText" className="toolbar-button" type="button" disabled={!context?.pdfDocument}
                                 title="Text" role="radio" aria-controls="editorFreeTextParamsToolbar"
                                 tabIndex={32} onClick={() => toggleMenu('text')}>
                             <FaA/>
                         </button>
-                        {text && <div className="toolbar-params-dropdown">
-                            Color:
-                            <input type="color"/>
-                            Size:
-                            <input type="range" min="8" max="24"/>
-                        </div>}
+                        <ToolbarDropdown isActive={text}>
+                            <div className="flex-row content-40-60">
+                                <span>Color:</span>
+                                <input type="color"/>
+                            </div>
+                            <div className="flex-row content-40-60">
+                                <span>Size:</span>
+                                <input type="range" min="8" max="24"/>
+                            </div>
+                        </ToolbarDropdown>
 
                         <button id="editorInk" className="toolbar-button" type="button" disabled={!context?.pdfDocument} title="Draw"
                                 role="radio" tabIndex={33} onClick={() => toggleMenu('draw')}>
                             <FaPencil/>
                         </button>
-                        {draw && <div className="toolbar-params-dropdown">
-                            Color:
-                            <input type="color"/>
-                            Thickness:
-                            <input type="range" min="1" max="20"/>
-                            Opacity:
-                            <input type="range" min="1" max="100"/>
-                        </div>}
+                        <ToolbarDropdown isActive={draw}>
+                            <div className="flex-row content-40-60">
+                                <span>Color:</span>
+                                <input type="color"/>
+                            </div>
+                            <div className="flex-row content-40-60">
+                                <span>Thickness:</span>
+                                <input type="range" min="1" max="20"/>
+                            </div>
+                            <div className="flex-row content-40-60">
+                                <span>Opacity:</span>
+                                <input type="range" min="1" max="100"/>
+                            </div>
+                        </ToolbarDropdown>
 
                         <button id="editorStamp" className="toolbar-button" type="button" disabled={!context?.pdfDocument}
                                 title="Add or edit images" role="radio"
                                 tabIndex={34} onClick={() => toggleMenu('image')}>
                             <FaFileImage/>
                         </button>
-                        {image && <div className="toolbar-params-dropdown">
-                            <button>Add Image</button>
-                        </div>}
+                        <ToolbarDropdown isActive={image}>
+                            <div className="flex-row content-40-60">
+                            </div>
+                            <div className="flex-row">
+                                <button className="image-button">
+                                    <FaCirclePlus />
+                                    Add Image</button>
+                            </div>
+                        </ToolbarDropdown>
                     </div>
 
                     <div className="vertical-toolbar-separator"></div>

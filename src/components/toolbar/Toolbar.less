@@ -49,3 +49,35 @@
     background-color: #f0f0f0;
     padding: 5px 8px;
 }
+
+
+.flex-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.flex-row.content-40-60 > *:first-child {
+    width: 40%;
+}
+
+.flex-row.content-40-60 > *:nth-child(2) {
+    width: 60%;
+}
+
+.image-button {
+    margin: 0;
+    padding: 4px 7px;
+    border: none;
+    border-radius: 2px;
+    display: flex;
+    cursor: pointer;
+    align-items: center;
+}
+
+.image-button:hover, .toolbar-button:hover {
+    background-color: rgba(87, 87, 87, 0.23);
+}
+
+.image-button > svg {
+    margin-right: 2px;
+}
