@@ -119,9 +119,12 @@ export const PDFProvider = ( {children, defaultSrc}: {children: ReactNode, defau
         console.log('Get new document');
         if (loadingTask) {
             loadingTask.promise
-                .finally(() => {
-                    return loadDocument();
+                .then(() => {
+                    return loadDocument().catch((e)=>{
+                        console.error(e);
+                    })
                 })
+                .catch(() => loadDocument())
         } else {
             void loadDocument();
         }

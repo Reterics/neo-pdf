@@ -1,0 +1,9 @@
+# glTF and JSON files are written with Unix-style line endings.
+*.gltf text eol=lf
+# Turn off text-based EOL adaptations for various binary formats.
+*.jpg binary
+*.png binary
+*.hdr binary
+*.bin binary
+*.glb binary
+*.blend binary

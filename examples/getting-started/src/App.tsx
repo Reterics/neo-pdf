@@ -8,7 +8,7 @@ const App: React.FC = () => {
     return (
         <div>
             <h1>Neo-PDF</h1>
-            <WebViewer defaultSrc={defaultFile} pagination={true}/>
+            <WebViewer defaultSrc={defaultFile}/>
         </div>
     );
 };
