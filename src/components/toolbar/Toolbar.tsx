@@ -10,6 +10,7 @@ import './Toolbar.less';
 import {useContext, useState} from "react";
 import {PDFContext} from "../../PDFProvider";
 import ToolbarDropdown from "./ToolbarDropdown";
+import {AnnotationEditorType} from "pdfjs-dist";
 
 const Toolbar = () => {
 
@@ -20,13 +21,17 @@ const Toolbar = () => {
     const [draw, setDraw] = useState(false);
     const [image, setImage] = useState(false);
 
-    const toggleMenu = (type: 'highlight'|'text'|'draw'|'image') => {
-        setHighlight(type === 'highlight' ? !highlight : false);
-        setText(type === 'text' ? !text : false);
-        setDraw(type === 'draw' ? !draw : false);
-        setImage(type === 'image' ? !image : false);
+    const toggleMenu = (type: number) => {
+        setHighlight(type === AnnotationEditorType.HIGHLIGHT ? !highlight : false);
+        setText(type === AnnotationEditorType.FREETEXT ? !text : false);
+        setDraw(type === AnnotationEditorType.INK ? !draw : false);
+        setImage(type === AnnotationEditorType.STAMP ? !image : false);
 
-        context?.emit('annotation', type);
+        if (!highlight && !text && !draw && !image) {
+            context?.emit('switchannotationeditormode', AnnotationEditorType.NONE);
+        } else {
+            context?.emit('switchannotationeditormode', type);
+        }
     };
 
     const openPDFFile = () => {
@@ -88,7 +93,7 @@ const Toolbar = () => {
                 <div className="toolbar-container-rigth">
                     <div className="editor-buttons">
                         <button id="editorHighlight" className="toolbar-button" type="button" disabled={!context?.pdfDocument}
-                                title="Highlight" role="radio" tabIndex={31} onClick={() => toggleMenu('highlight')}>
+                                title="Highlight" role="radio" tabIndex={31} onClick={() => toggleMenu(AnnotationEditorType.HIGHLIGHT)}>
                             <FaHighlighter/>
                         </button>
                         <ToolbarDropdown isActive={highlight}>
@@ -105,7 +110,7 @@ const Toolbar = () => {
 
                         <button id="editorFreeText" className="toolbar-button" type="button" disabled={!context?.pdfDocument}
                                 title="Text" role="radio" aria-controls="editorFreeTextParamsToolbar"
-                                tabIndex={32} onClick={() => toggleMenu('text')}>
+                                tabIndex={32} onClick={() => toggleMenu(AnnotationEditorType.FREETEXT)}>
                             <FaA/>
                         </button>
                         <ToolbarDropdown isActive={text}>
@@ -120,7 +125,7 @@ const Toolbar = () => {
                         </ToolbarDropdown>
 
                         <button id="editorInk" className="toolbar-button" type="button" disabled={!context?.pdfDocument} title="Draw"
-                                role="radio" tabIndex={33} onClick={() => toggleMenu('draw')}>
+                                role="radio" tabIndex={33} onClick={() => toggleMenu(AnnotationEditorType.INK)}>
                             <FaPencil/>
                         </button>
                         <ToolbarDropdown isActive={draw}>
@@ -140,7 +145,7 @@ const Toolbar = () => {
 
                         <button id="editorStamp" className="toolbar-button" type="button" disabled={!context?.pdfDocument}
                                 title="Add or edit images" role="radio"
-                                tabIndex={34} onClick={() => toggleMenu('image')}>
+                                tabIndex={34} onClick={() => toggleMenu(AnnotationEditorType.STAMP)}>
                             <FaFileImage/>
                         </button>
                         <ToolbarDropdown isActive={image}>

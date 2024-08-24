@@ -1,6 +1,6 @@
 import {createContext, ReactNode, useEffect, useRef, useState} from "react";
-import {PDFContextAPI, WebViewerData} from "./types";
-import {AnnotationEditorType, getDocument, PDFDocumentProxy} from "pdfjs-dist";
+import {PDFContextAPI, ViewerEventType, WebViewerData} from "./types";
+import {AnnotationEditorType, getDocument, PDFDocumentLoadingTask, PDFDocumentProxy} from "pdfjs-dist";
 import {
     DownloadManager,
     EventBus,
@@ -9,6 +9,7 @@ import {
     PDFLinkService,
     PDFScriptingManager, PDFViewer
 } from "pdfjs-dist/web/pdf_viewer.mjs";
+import "pdfjs-dist/web/pdf_viewer.css";
 
 const MAX_IMAGE_SIZE = 1024 * 1024;
 const MAX_CANVAS_PIXELS = 0; // CSS-only zooming.
@@ -17,6 +18,7 @@ const DEFAULT_SCALE_VALUE = "auto";
 
 export const PDFContext = createContext<PDFContextAPI | null>(null);
 
+let loadingTask: PDFDocumentLoadingTask;
 export const PDFProvider = ( {children, defaultSrc}: {children: ReactNode, defaultSrc?: string|URL|null} ) => {
     const container = useRef<HTMLDivElement>(null);
     const viewerContainer = useRef<HTMLDivElement>(null);
@@ -24,7 +26,8 @@ export const PDFProvider = ( {children, defaultSrc}: {children: ReactNode, defau
     const [viewerData, setViewerData] = useState<WebViewerData|null>(null);
 
 
-    useEffect(()=>{
+
+    useEffect(() => {
         console.log('Src: ', src);
         if (!src || !container.current) {
             return;
@@ -81,44 +84,70 @@ export const PDFProvider = ( {children, defaultSrc}: {children: ReactNode, defau
         });
 
 
+        const loadDocument = async ()=> {
+            loadingTask = getDocument({
+                url: src,
+                maxImageSize: MAX_IMAGE_SIZE
+            });
+
+            loadingTask.promise.then(async (pdf: PDFDocumentProxy) => {
+                if (loadingTask.destroyed) {
+                    return;
+                }
+                pdfViewer.setDocument(pdf);
+                pdfLinkService.setDocument(pdf);
+                pdfHistory.initialize({
+                    fingerprint: pdf.fingerprints[0]
+                });
+
+                setViewerData({
+                    pdfViewer: pdfViewer,
+                    pdfLinkService: pdfLinkService,
+                    pdfHistory: pdfHistory,
+                    l10n: l10n,
+                    eventBus: eventBus
+                });
+            }).catch(e => {
+                if (e.message === 'Loading aborted') {
+                    console.log('Loading aborted. Note: If you are using React-Dev, then it is normal at startup.');
+                } else {
+                    console.error(e.message);
+                }
+            })
+        };
+
         console.log('Get new document');
-        const loadingTask = getDocument({
-            url: src,
-            maxImageSize: MAX_IMAGE_SIZE
-        });
+        if (loadingTask) {
+            loadingTask.promise
+                .finally(() => {
+                    return loadDocument();
+                })
+        } else {
+            void loadDocument();
+        }
 
-        loadingTask.promise.then((pdf: PDFDocumentProxy) => {
-            pdfViewer.setDocument(pdf);
-            pdfLinkService.setDocument(pdf);
-            pdfHistory.initialize({
-                fingerprint: pdf.fingerprints[0]
-            });
-
-            setViewerData({
-                pdfViewer: pdfViewer,
-                pdfLinkService: pdfLinkService,
-                pdfHistory: pdfHistory,
-                l10n: l10n,
-                eventBus: eventBus
-            });
-        }).catch(e=>{
-            console.error(e);
-        })
 
         return () => {
             pdfViewer.setDocument(null as unknown as PDFDocumentProxy);
             pdfLinkService.setDocument(null, null);
             pdfHistory.reset();
+
+            void loadingTask.destroy();
         };
     }, [src]);
 
-    const eventMgr = (type: 'open'|'annotation', value: unknown)=> {
+    const eventMgr = (type: ViewerEventType, value: unknown)=> {
         switch (type) {
             case "open":
                 setSrc(value as string | URL | null);
                 break;
-            case "annotation":
-                // we can toggle annotations: highlight, freetext, draw and none
+            case "switchannotationeditormode":
+                // we can toggle annotations: highlight, freetext, draw and none (Source type: AnnotationEditorType)
+                if (viewerData) {
+                    viewerData.pdfViewer.annotationEditorMode = {mode: value as number};
+                } else {
+                    console.error('viewerData is not available');
+                }
                 break;
             default:
                 console.warn('Invalid event: ', type);

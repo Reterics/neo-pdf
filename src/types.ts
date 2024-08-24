@@ -36,8 +36,10 @@ export interface WebViewerData {
     pdfHistory: PDFHistory
 }
 
+export type ViewerEventType = 'open'|'switchannotationeditormode';
+
 export interface PDFContextAPI {
     viewerData: WebViewerData|null,
     pdfDocument?: PDFDocumentProxy,
-    emit: (type: 'open'|'annotation', value: unknown)=>void
+    emit: (type: ViewerEventType, value: unknown)=>void
 }

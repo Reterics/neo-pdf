@@ -19,6 +19,8 @@ or _you can download the package from npm registry (soon)_
 You can find usage examples in **examples** folder like **getting_started**.
 It has working examples how you can use this component in your project.
 
+![Preview](./docs/editor_01.png)
+
 ## Contribute
 
 There are many ways to [contribute](./CONTRIBUTING.md) to Chromate Extension.
