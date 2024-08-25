@@ -34,6 +34,10 @@ const Toolbar = () => {
         }
     };
 
+    const zoom = (step: 1|-1) => {
+        context?.emit('zoom', step);
+    };
+
     const openPDFFile = () => {
         if (!context || !context.emit) {
             console.warn('Context is not ready');
@@ -80,11 +84,13 @@ const Toolbar = () => {
                 </div>
 
                 <div className="toolbar-container-middle">
-                    <button id="zoomOut" className="toolbar-button" type="button" title="Zoom Out" tabIndex={21}>
+                    <button id="zoomOut" className="toolbar-button" type="button" title="Zoom Out" tabIndex={21}
+                        onClick={() => zoom(-1)}>
                         <FaMagnifyingGlassMinus/>
                     </button>
                     <div className="vertical-toolbar-separator"></div>
                     <button id="zoomIn" className="toolbar-button" type="button" title="Zoom In" tabIndex={22}
+                            onClick={() => zoom(1)}
                             data-l10n-id="pdfjs-zoom-in-button">
                         <FaMagnifyingGlassPlus />
                     </button>

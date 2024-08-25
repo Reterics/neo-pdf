@@ -15,6 +15,7 @@ const MAX_IMAGE_SIZE = 1024 * 1024;
 const MAX_CANVAS_PIXELS = 0; // CSS-only zooming.
 const TEXT_LAYER_MODE = 1; // DISABLE
 const DEFAULT_SCALE_VALUE = "auto";
+const DEFAULT_ZOOM_DELAY = 400;
 
 export const PDFContext = createContext<PDFContextAPI | null>(null);
 
@@ -150,6 +151,17 @@ export const PDFProvider = ( {children, defaultSrc}: {children: ReactNode, defau
                     viewerData.pdfViewer.annotationEditorMode = {mode: value as number};
                 } else {
                     console.error('viewerData is not available');
+                }
+                break;
+            case "zoom":
+                if (viewerData) {
+                    if (viewerData.pdfViewer.isInPresentationMode) {
+                        return;
+                    }
+                    viewerData.pdfViewer.updateScale({
+                        drawingDelay: DEFAULT_ZOOM_DELAY,
+                        steps: value as number
+                    });
                 }
                 break;
             default:
