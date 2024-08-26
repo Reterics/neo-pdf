@@ -70,13 +70,16 @@ const Toolbar = () => {
                         <FaMagnifyingGlass/>
                     </button>
                     <button className="toolbar-button" title="Previous Page" id="previous" type="button"
-                            tabIndex={13}>
+                            tabIndex={13} onClick={()=>context?.emit('page', 'previous')}>
                         <FaArrowLeft/>
                     </button>
-                    <button className="toolbar-button" title="Next Page" id="next" type="button" tabIndex={14}>
+                    <button className="toolbar-button" title="Next Page" id="next" type="button" tabIndex={14}
+                            onClick={()=>context?.emit('page', 'next')}>
                         <FaArrowRight/>
                     </button>
-                    <input type="number" id="pageNumber" className="toolbar-field w-40px" title="Page" defaultValue="1"
+                    <input type="number" id="pageNumber" className="toolbar-field w-40px" title="Page"
+                           value={context?.viewerData?.pdfViewer.currentPageNumber}
+                           onChange={(e) => context?.emit('page', Number(e.target.value))}
                            min="1"
                            tabIndex={15} autoComplete="off"/>
 

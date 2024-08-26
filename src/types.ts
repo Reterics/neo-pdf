@@ -36,7 +36,7 @@ export interface WebViewerData {
     pdfHistory: PDFHistory
 }
 
-export type ViewerEventType = 'open'|'switchannotationeditormode'|'zoom';
+export type ViewerEventType = 'open'|'switchannotationeditormode'|'zoom'|'page';
 
 export interface PDFContextAPI {
     viewerData: WebViewerData|null,

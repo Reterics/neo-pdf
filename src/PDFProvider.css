@@ -1,0 +1,11 @@
+.viewer-container {
+    margin-top: 32px;
+    overflow: auto;
+    position: absolute;
+    inset: 32px 0 0;
+    outline: none;
+}
+
+.web-viewer-outer {
+    height: 88vh;
+}

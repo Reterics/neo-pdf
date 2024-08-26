@@ -10,6 +10,7 @@ import {
     PDFScriptingManager, PDFViewer
 } from "pdfjs-dist/web/pdf_viewer.mjs";
 import "pdfjs-dist/web/pdf_viewer.css";
+import "./PDFProvider.css";
 
 const MAX_IMAGE_SIZE = 1024 * 1024;
 const MAX_CANVAS_PIXELS = 0; // CSS-only zooming.
@@ -158,11 +159,30 @@ export const PDFProvider = ( {children, defaultSrc}: {children: ReactNode, defau
                     if (viewerData.pdfViewer.isInPresentationMode) {
                         return;
                     }
-                    viewerData.pdfViewer.updateScale({
-                        drawingDelay: DEFAULT_ZOOM_DELAY,
-                        steps: value as number
-                    });
+                    if (typeof value === 'number') {
+                        viewerData.pdfViewer.updateScale({
+                            drawingDelay: DEFAULT_ZOOM_DELAY,
+                            steps: value as number
+                        });
+                    }
                 }
+                break;
+            case "page":
+                if (viewerData) {
+                    if (typeof value === "number") {
+                        viewerData.pdfViewer.currentPageNumber = value as number;
+                    } else if (value === 'next') {
+                        viewerData.pdfViewer.nextPage();
+                    } else if (value === 'previous') {
+                        viewerData.pdfViewer.previousPage();
+                    } else if (value === 'last') {
+                        viewerData.pdfViewer.currentPageNumber = viewerData.pdfViewer.pagesCount
+                    } else if (value === 'first') {
+                        viewerData.pdfViewer.currentPageNumber = 1;
+                    }
+                }
+
+
                 break;
             default:
                 console.warn('Invalid event: ', type);
@@ -180,6 +200,8 @@ export const PDFProvider = ( {children, defaultSrc}: {children: ReactNode, defau
             <div ref={container} className="viewer-container" tabIndex={0} style={{position: 'absolute'}}>
                 <div ref={viewerContainer} id="viewer" className="pdfViewer"></div>
             </div>
+
+
         </PDFContext.Provider>
     )
 }
