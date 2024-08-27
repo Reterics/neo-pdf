@@ -96,3 +96,16 @@
 .image-button > svg {
     margin-right: 2px;
 }
+
+@media print {
+    .toolbar {
+        display: none;
+    }
+    .web-viewer-outer {
+        height: 100%;
+    }
+    #root, #root > div {
+        height: 100%;
+    }
+}
+

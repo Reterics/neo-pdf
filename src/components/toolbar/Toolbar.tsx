@@ -171,7 +171,7 @@ const Toolbar = () => {
                     <div className="vertical-toolbar-separator"></div>
 
                     <button id="print" className="toolbar-button" type="button" title="Print"
-                            tabIndex={41}>
+                            tabIndex={41} onClick={() => context?.emit('print', null)}>
                         <FaPrint/>
                     </button>
 
@@ -181,7 +181,7 @@ const Toolbar = () => {
                     </button>
 
                     <button id="download" className="toolbar-button" type="button" title="Save"
-                            tabIndex={42}>
+                            tabIndex={42} onClick={()=> context?.emit('download', null)}>
                         <FaFloppyDisk/>
                     </button>
                 </div>

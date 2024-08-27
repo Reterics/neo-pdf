@@ -182,6 +182,24 @@ export const PDFProvider = ( {children, defaultSrc}: {children: ReactNode, defau
                     }
                 }
 
+                break;
+            case "print":
+                window.print();
+                break;
+            case "download":
+                if (viewerData && viewerData.pdfViewer && viewerData.pdfViewer.pdfDocument) {
+                    try {
+                        viewerData.pdfViewer.pdfDocument.getData()
+                            .then(data => {
+                                if (viewerData.pdfViewer.downloadManager) {
+                                    viewerData.pdfViewer.downloadManager.download(data, '', 'download.pdf');
+                                }
+                            });
+                    } catch (e) {
+                        console.error(e);
+                        // When the PDF document isn't ready, simply download using the URL.
+                    }
+                }
 
                 break;
             default:
