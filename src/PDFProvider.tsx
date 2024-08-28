@@ -121,10 +121,25 @@ export const PDFProvider = ( {children, defaultSrc}: {children: ReactNode, defau
         console.log('Get new document');
         if (loadingTask) {
             loadingTask.promise
-                .then(() => {
-                    return loadDocument().catch((e)=>{
-                        console.error(e);
-                    })
+                .then((e) => {
+
+                    // TODO: Investigate why we need debounce here:
+                    let maxTries = 3,
+                        currentIndex = 0;
+                    const tryToLoadDoc = ()=>{
+                        loadDocument().catch((e)=>{
+                            if (e && e.message &&
+                                e.message.startsWith('PDFWorker.fromPort - the worker is being destroyed.') &&
+                                currentIndex < maxTries) {
+                                currentIndex++;
+                                setTimeout(()=> {
+                                    tryToLoadDoc();
+                                }, 1000);
+                            }
+                        })
+
+                    };
+                    tryToLoadDoc();
                 })
                 .catch(() => loadDocument())
         } else {
@@ -137,11 +152,14 @@ export const PDFProvider = ( {children, defaultSrc}: {children: ReactNode, defau
             pdfLinkService.setDocument(null, null);
             pdfHistory.reset();
 
-            void loadingTask.destroy();
+            if (loadingTask) {
+                void loadingTask.destroy();
+            }
+
         };
     }, [src]);
 
-    const eventMgr = (type: ViewerEventType, value: unknown)=> {
+    const eventMgr = (type: ViewerEventType, value: unknown): unknown => {
         switch (type) {
             case "open":
                 setSrc(value as string | URL | null);
@@ -165,12 +183,19 @@ export const PDFProvider = ( {children, defaultSrc}: {children: ReactNode, defau
                             steps: value as number
                         });
                     }
+                } else {
+                    console.warn('viewerData is not available');
                 }
                 break;
             case "page":
                 if (viewerData) {
                     if (typeof value === "number") {
-                        viewerData.pdfViewer.currentPageNumber = value as number;
+                        const pagesCount = viewerData.pdfViewer.pagesCount || 1;
+                        if (value <= pagesCount && value > 0) {
+                            viewerData.pdfViewer.currentPageNumber = value as number;
+                        } else {
+                            console.warn('Invalid count added: ', value);
+                        }
                     } else if (value === 'next') {
                         viewerData.pdfViewer.nextPage();
                     } else if (value === 'previous') {
@@ -179,9 +204,14 @@ export const PDFProvider = ( {children, defaultSrc}: {children: ReactNode, defau
                         viewerData.pdfViewer.currentPageNumber = viewerData.pdfViewer.pagesCount
                     } else if (value === 'first') {
                         viewerData.pdfViewer.currentPageNumber = 1;
+                    } else {
+                        console.warn('Invalid value: ', value);
+                        return;
                     }
+                    return viewerData.pdfViewer.currentPageNumber;
+                } else {
+                    console.warn('viewerData is not available');
                 }
-
                 break;
             case "print":
                 window.print();
@@ -199,6 +229,8 @@ export const PDFProvider = ( {children, defaultSrc}: {children: ReactNode, defau
                         console.error(e);
                         // When the PDF document isn't ready, simply download using the URL.
                     }
+                } else {
+                    console.warn('viewerData or pdf is not available');
                 }
 
                 break;

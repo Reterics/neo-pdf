@@ -41,5 +41,5 @@ export type ViewerEventType = 'open'|'switchannotationeditormode'|'zoom'|'page'|
 export interface PDFContextAPI {
     viewerData: WebViewerData|null,
     pdfDocument?: PDFDocumentProxy,
-    emit: (type: ViewerEventType, value: unknown)=>void
+    emit: (type: ViewerEventType, value: unknown)=>unknown
 }

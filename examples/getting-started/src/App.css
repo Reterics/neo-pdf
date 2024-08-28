@@ -1,13 +1,3 @@
-
-.svg-viewer {
-    border: 1px solid black;
-}
-.svg-viewer-container, .svg-viewer-controls {
-    display: block;
-    width: fit-content;
-    margin: auto;
-}
-
 html {
     overflow: hidden;
 }

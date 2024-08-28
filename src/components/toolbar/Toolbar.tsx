@@ -20,6 +20,17 @@ const Toolbar = () => {
     const [text, setText] = useState(false);
     const [draw, setDraw] = useState(false);
     const [image, setImage] = useState(false);
+    const [pageNumber, setPageNumber] = useState(1);
+
+    const changePageNumber = (value: number) => {
+        if (context?.viewerData?.pdfViewer?.pagesCount &&
+            value > 0 && value < context?.viewerData?.pdfViewer?.pagesCount) {
+            setPageNumber(value);
+
+            const currentPageNumber = context?.emit('page', value);
+            console.error('Set Page number to ', currentPageNumber)
+        }
+    };
 
     const toggleMenu = (type: number) => {
         setHighlight(type === AnnotationEditorType.HIGHLIGHT ? !highlight : false);
@@ -63,24 +74,23 @@ const Toolbar = () => {
 
     return (
         <div className="toolbar">
-            <div id="svg-viewer-container" className="toolbar-container">
+            <div className="toolbar-container">
                 <div className="toolbar-container-left">
                     <button id="viewFind" className="toolbar-button" type="button" title="Find in Document"
                             tabIndex={12}>
                         <FaMagnifyingGlass/>
                     </button>
                     <button className="toolbar-button" title="Previous Page" id="previous" type="button"
-                            tabIndex={13} onClick={()=>context?.emit('page', 'previous')}>
+                            tabIndex={13} onClick={()=>changePageNumber(Math.max(1, pageNumber - 1))}>
                         <FaArrowLeft/>
                     </button>
                     <button className="toolbar-button" title="Next Page" id="next" type="button" tabIndex={14}
-                            onClick={()=>context?.emit('page', 'next')}>
+                            onClick={()=>changePageNumber(pageNumber + 1)}>
                         <FaArrowRight/>
                     </button>
-                    <input type="number" id="pageNumber" className="toolbar-field w-40px" title="Page"
-                           value={context?.viewerData?.pdfViewer.currentPageNumber}
-                           onChange={(e) => context?.emit('page', Number(e.target.value))}
-                           min="1"
+                    <input type="number" className="toolbar-field w-40px" title="Page"
+                           value={pageNumber || 1}
+                           onChange={(e) => changePageNumber(Number(e.target.value))}
                            tabIndex={15} autoComplete="off"/>
 
                     <span id="numPages" className="toolbarLabel"></span>

@@ -4,8 +4,6 @@ import {PDFProvider} from "../PDFProvider";
 
 
 const WebPDFViewer = ({defaultSrc}: SVGPDFViewerProperties) => {
-    // TODO: Move src to Toolbar
-
     return (
         <div className="web-viewer-outer">
             <div className="web-viewer-main">
